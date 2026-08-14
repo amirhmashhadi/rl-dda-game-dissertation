@@ -1,0 +1,79 @@
+# --------------------
+# Python
+# --------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# --------------------
+# Godot
+# --------------------
+.godot/
+.import/
+*.tmp
+*.translation
+export_presets.cfg
+
+# Godot imported/generated files
+*.import
+
+# Godot editor / engine binaries
+Godot_v*/
+godot_project/Godot_v*/
+*.exe
+*.pck
+
+# --------------------
+# C# / .NET
+# --------------------
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+
+# --------------------
+# VS Code
+# --------------------
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# VS Code machine-specific settings anywhere in repo
+**/.vscode/settings.json
+**/.vscode/launch.json
+**/.vscode/tasks.json
+
+# --------------------
+# OS files
+# --------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --------------------
+# Data / results
+# --------------------
+data/raw/
+results/temp/
+results/cache/
+
+# Keep folder structure
+!data/
+!data/.gitkeep
+!data/raw/.gitkeep
+!results/
+!results/.gitkeep
+
+# --------------------
+# Logs
+# --------------------
+*.log
+logs/
