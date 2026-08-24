@@ -1,12 +1,12 @@
 class_name ExperimentManager
 extends Node2D
 
-const RESULTS_FILE_PATH := "res://data/raw/static_baseline_results.csv"
-const STATIC_DIFFICULTY_LEVEL := 5
-const SYSTEM_NAME := "static"
+@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_recalibrated_results.csv"
+@export_range(0, 10, 1) var static_difficulty_level := 5
+@export var system_name := "static"
 
 @export var episode_duration := 60.0
-@export var max_runs := 10
+@export var max_runs := 30
 @export var reset_delay := 1.0
 @export var simulation_speed := 5.0
 
@@ -23,7 +23,7 @@ var _run_number := 0
 
 func _ready() -> void:
 	Engine.time_scale = simulation_speed
-	
+
 	difficulty_manager.difficulty_changed.connect(_on_difficulty_changed)
 	simulated_player.died.connect(_on_simulated_player_died)
 
@@ -45,7 +45,7 @@ func _start_run() -> void:
 	if _run_number >= max_runs:
 		enemy_turret.set_active(false)
 		Engine.time_scale = 1.0
-		print("Experiment complete. Results saved to: ", ProjectSettings.globalize_path(RESULTS_FILE_PATH))
+		print("Experiment complete. Results saved to: ", ProjectSettings.globalize_path(results_file_path))
 		return
 
 	_run_number += 1
@@ -55,7 +55,7 @@ func _start_run() -> void:
 	_clear_projectiles()
 
 	simulated_player.reset_player(player_spawn.global_position)
-	difficulty_manager.set_difficulty_level(STATIC_DIFFICULTY_LEVEL)
+	difficulty_manager.set_difficulty_level(static_difficulty_level)
 	enemy_turret.set_active(true)
 
 	print("Starting run ", _run_number)
@@ -76,10 +76,10 @@ func _finish_run(player_died: bool) -> void:
 
 
 func _prepare_results_file() -> void:
-	var file := FileAccess.open(RESULTS_FILE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(results_file_path, FileAccess.WRITE)
 
 	if file == null:
-		push_error("Could not create results file.")
+		push_error("Could not create results file: " + results_file_path)
 		return
 
 	file.store_csv_line(PackedStringArray([
@@ -97,19 +97,19 @@ func _prepare_results_file() -> void:
 
 
 func _append_result(player_died: bool) -> void:
-	var file := FileAccess.open(RESULTS_FILE_PATH, FileAccess.READ_WRITE)
+	var file := FileAccess.open(results_file_path, FileAccess.READ_WRITE)
 
 	if file == null:
-		push_error("Could not open results file.")
+		push_error("Could not open results file: " + results_file_path)
 		return
 
 	file.seek_end()
 	file.store_csv_line(PackedStringArray([
 		simulated_player.profile_name,
-		SYSTEM_NAME,
+		system_name,
 		str(_run_number),
 		str(player_died),
-		str(snappedf(simulated_player.survival_time, 0.01)),
+		str(snappedf(minf(simulated_player.survival_time, episode_duration), 0.01)),
 		str(simulated_player.score),
 		str(snappedf(simulated_player.get_health_remaining(), 0.01)),
 		str(simulated_player.hits_taken),

@@ -2,23 +2,37 @@ class_name EnemyTurret
 extends Node2D
 
 const MAX_DIFFICULTY_LEVEL := 10
+const NORMAL_DIFFICULTY_LEVEL := 5
 
-@export var max_damage := 18.0
-@export var max_fire_interval := 1.4
-@export var max_projectile_speed := 420.0
-@export var max_spread_degrees := 25.0
-@export var min_damage := 5.0
-@export var min_fire_interval := 0.35
-@export var min_projectile_speed := 150.0
-@export var min_spread_degrees := 2.0
+@export_group("Projectile Settings")
 @export var projectile_scene: PackedScene
 @export var projectiles_path: NodePath = "../Projectiles"
 @export var target_path: NodePath = "../SimulatedPlayer"
 
-var damage := 10.0
-var fire_interval := 1.0
-var projectile_speed := 250.0
-var shot_spread_degrees := 10.0
+@export_group("Projectile Speed")
+@export var easiest_projectile_speed := 150.0
+@export var normal_projectile_speed := 220.0
+@export var hardest_projectile_speed := 360.0
+
+@export_group("Fire Rate")
+@export var easiest_fire_interval := 1.4
+@export var normal_fire_interval := 1.18
+@export var hardest_fire_interval := 0.55
+
+@export_group("Damage")
+@export var easiest_damage := 5.0
+@export var normal_damage := 8.5
+@export var hardest_damage := 14.0
+
+@export_group("Accuracy")
+@export var easiest_spread_degrees := 25.0
+@export var normal_spread_degrees := 19.0
+@export var hardest_spread_degrees := 6.0
+
+var damage := normal_damage
+var fire_interval := normal_fire_interval
+var projectile_speed := normal_projectile_speed
+var shot_spread_degrees := normal_spread_degrees
 
 var _is_active := false
 var _shoot_timer := 0.0
@@ -48,12 +62,22 @@ func _physics_process(delta: float) -> void:
 
 
 func apply_difficulty(difficulty_level: int) -> void:
-	var difficulty_ratio := float(clampi(difficulty_level, 0, MAX_DIFFICULTY_LEVEL)) / float(MAX_DIFFICULTY_LEVEL)
+	var clamped_level := clampi(difficulty_level, 0, MAX_DIFFICULTY_LEVEL)
 
-	projectile_speed = lerpf(min_projectile_speed, max_projectile_speed, difficulty_ratio)
-	fire_interval = lerpf(max_fire_interval, min_fire_interval, difficulty_ratio)
-	damage = lerpf(min_damage, max_damage, difficulty_ratio)
-	shot_spread_degrees = lerpf(max_spread_degrees, min_spread_degrees, difficulty_ratio)
+	if clamped_level <= NORMAL_DIFFICULTY_LEVEL:
+		var ratio := float(clamped_level) / float(NORMAL_DIFFICULTY_LEVEL)
+
+		projectile_speed = lerpf(easiest_projectile_speed, normal_projectile_speed, ratio)
+		fire_interval = lerpf(easiest_fire_interval, normal_fire_interval, ratio)
+		damage = lerpf(easiest_damage, normal_damage, ratio)
+		shot_spread_degrees = lerpf(easiest_spread_degrees, normal_spread_degrees, ratio)
+	else:
+		var ratio := float(clamped_level - NORMAL_DIFFICULTY_LEVEL) / float(MAX_DIFFICULTY_LEVEL - NORMAL_DIFFICULTY_LEVEL)
+
+		projectile_speed = lerpf(normal_projectile_speed, hardest_projectile_speed, ratio)
+		fire_interval = lerpf(normal_fire_interval, hardest_fire_interval, ratio)
+		damage = lerpf(normal_damage, hardest_damage, ratio)
+		shot_spread_degrees = lerpf(normal_spread_degrees, hardest_spread_degrees, ratio)
 
 
 func set_active(value: bool) -> void:
@@ -76,5 +100,4 @@ func _shoot() -> void:
 
 	projectile.global_position = projectile_spawn_point.global_position
 	projectile.setup(direction.rotated(spread), projectile_speed, damage)
-
 	projectiles.add_child(projectile)

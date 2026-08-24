@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/enemy_turret.gd" id="1_8mwka"]
 [ext_resource type="PackedScene" uid="uid://3qy2hpxrao7s" path="res://scenes/projectile.tscn" id="2_bdu1w"]
-[ext_resource type="Texture2D" uid="uid://cjeid2iotvrl8" path="res://icon.svg" id="3_2bqu2"]
+[ext_resource type="Texture2D" uid="uid://dvtoqev1tfom8" path="res://icon.svg" id="3_2bqu2"]
 
 [node name="EnemyTurret" type="Node2D"]
 script = ExtResource("1_8mwka")
