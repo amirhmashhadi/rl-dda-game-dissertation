@@ -1,7 +1,7 @@
 class_name ExperimentManager
 extends Node2D
 
-@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_recalibrated_results.csv"
+@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_beginner.csv"
 @export_range(0, 10, 1) var static_difficulty_level := 5
 @export var system_name := "static"
 
@@ -54,7 +54,7 @@ func _start_run() -> void:
 
 	_clear_projectiles()
 
-	simulated_player.reset_player(player_spawn.global_position)
+	simulated_player.reset_player(player_spawn.global_position, _run_number, max_runs)
 	difficulty_manager.set_difficulty_level(static_difficulty_level)
 	enemy_turret.set_active(true)
 
@@ -92,9 +92,16 @@ func _prepare_results_file() -> void:
 		"health_remaining",
 		"hits_taken",
 		"deaths",
-		"final_difficulty"
+		"final_difficulty",
+		"profile_speed",
+		"profile_reaction_time",
+		"profile_dodge_chance",
+		"profile_mistake_chance",
+		"profile_detection_radius",
+		"profile_dodge_duration",
+		"profile_strafe_weight",
+		"profile_retreat_weight"
 	]))
-
 
 func _append_result(player_died: bool) -> void:
 	var file := FileAccess.open(results_file_path, FileAccess.READ_WRITE)
@@ -103,20 +110,29 @@ func _append_result(player_died: bool) -> void:
 		push_error("Could not open results file: " + results_file_path)
 		return
 
+	var clamped_survival_time := minf(simulated_player.survival_time, episode_duration)
+
 	file.seek_end()
 	file.store_csv_line(PackedStringArray([
 		simulated_player.profile_name,
 		system_name,
 		str(_run_number),
 		str(player_died),
-		str(snappedf(minf(simulated_player.survival_time, episode_duration), 0.01)),
+		str(snappedf(clamped_survival_time, 0.01)),
 		str(simulated_player.score),
 		str(snappedf(simulated_player.get_health_remaining(), 0.01)),
 		str(simulated_player.hits_taken),
 		str(simulated_player.deaths),
-		str(difficulty_manager.difficulty_level)
+		str(difficulty_manager.difficulty_level),
+		str(snappedf(simulated_player.movement_speed, 0.01)),
+		str(snappedf(simulated_player.reaction_time, 0.01)),
+		str(snappedf(simulated_player.dodge_chance, 0.01)),
+		str(snappedf(simulated_player.mistake_chance, 0.01)),
+		str(snappedf(simulated_player.threat_detection_radius, 0.01)),
+		str(snappedf(simulated_player.dodge_duration, 0.01)),
+		str(snappedf(simulated_player.strafe_weight, 0.01)),
+		str(snappedf(simulated_player.retreat_weight, 0.01))
 	]))
-
 
 func _clear_projectiles() -> void:
 	for child in projectiles.get_children():

@@ -6,16 +6,54 @@ signal died
 const DEFAULT_HEALTH := 100.0
 const SCORE_PER_SECOND := 10.0
 
+const PROFILE_STATS := {
+	"beginner": {
+		"movement_speed": 130.0,
+		"reaction_time": 0.70,
+		"dodge_chance": 0.28,
+		"mistake_chance": 0.45,
+		"threat_detection_radius": 120.0,
+		"dodge_duration": 0.55,
+		"strafe_weight": 0.60,
+		"retreat_weight": 0.20
+	},
+	"intermediate": {
+		"movement_speed": 170.0,
+		"reaction_time": 0.30,
+		"dodge_chance": 0.65,
+		"mistake_chance": 0.15,
+		"threat_detection_radius": 220.0,
+		"dodge_duration": 0.85,
+		"strafe_weight": 0.75,
+		"retreat_weight": 0.35
+	},
+	"skilled": {
+		"movement_speed": 195.0,
+		"reaction_time": 0.20,
+		"dodge_chance": 0.85,
+		"mistake_chance": 0.06,
+		"threat_detection_radius": 260.0,
+		"dodge_duration": 0.95,
+		"strafe_weight": 0.85,
+		"retreat_weight": 0.40
+	}
+}
+
 @export var arena_half_size := Vector2(480.0, 270.0)
-@export var dodge_chance := 0.55
-@export var dodge_duration := 0.75
-@export var mistake_chance := 0.18
-@export var movement_speed := 160.0
-@export var profile_name := "intermediate"
-@export var reaction_time := 0.35
-@export var retreat_weight := 0.35
-@export var strafe_weight := 0.75
-@export var threat_detection_radius := 180.0
+
+@export_enum("beginner", "intermediate", "skilled", "inconsistent", "improving")
+var selected_profile := "intermediate"
+
+var profile_name := "intermediate"
+
+var dodge_chance := 0.65
+var dodge_duration := 0.85
+var mistake_chance := 0.15
+var movement_speed := 170.0
+var reaction_time := 0.30
+var retreat_weight := 0.35
+var strafe_weight := 0.75
+var threat_detection_radius := 220.0
 
 var deaths := 0
 var health := DEFAULT_HEALTH
@@ -32,6 +70,7 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
+	_apply_profile_for_run(1, 1)
 
 
 func _physics_process(delta: float) -> void:
@@ -56,7 +95,9 @@ func _physics_process(delta: float) -> void:
 	_clamp_to_arena()
 
 
-func reset_player(spawn_position: Vector2) -> void:
+func reset_player(spawn_position: Vector2, run_number := 1, total_runs := 1) -> void:
+	_apply_profile_for_run(run_number, total_runs)
+
 	deaths = 0
 	health = DEFAULT_HEALTH
 	hits_taken = 0
@@ -89,6 +130,113 @@ func is_dead() -> bool:
 
 func get_health_remaining() -> float:
 	return maxf(health, 0.0)
+
+
+func _apply_profile_for_run(run_number: int, total_runs: int) -> void:
+	match selected_profile:
+		"beginner":
+			profile_name = "beginner"
+			_apply_stats(PROFILE_STATS["beginner"])
+
+		"intermediate":
+			profile_name = "intermediate"
+			_apply_stats(PROFILE_STATS["intermediate"])
+
+		"skilled":
+			profile_name = "skilled"
+			_apply_stats(PROFILE_STATS["skilled"])
+
+		"inconsistent":
+			profile_name = "inconsistent"
+			_apply_inconsistent_stats()
+
+		"improving":
+			profile_name = "improving"
+			_apply_improving_stats(run_number, total_runs)
+
+		_:
+			profile_name = "intermediate"
+			_apply_stats(PROFILE_STATS["intermediate"])
+
+
+func _apply_stats(stats: Dictionary) -> void:
+	movement_speed = float(stats["movement_speed"])
+	reaction_time = float(stats["reaction_time"])
+	dodge_chance = float(stats["dodge_chance"])
+	mistake_chance = float(stats["mistake_chance"])
+	threat_detection_radius = float(stats["threat_detection_radius"])
+	dodge_duration = float(stats["dodge_duration"])
+	strafe_weight = float(stats["strafe_weight"])
+	retreat_weight = float(stats["retreat_weight"])
+
+
+func _apply_inconsistent_stats() -> void:
+	movement_speed = _rng.randf_range(135.0, 195.0)
+	reaction_time = _rng.randf_range(0.20, 0.65)
+	dodge_chance = _rng.randf_range(0.35, 0.85)
+	mistake_chance = _rng.randf_range(0.06, 0.40)
+	threat_detection_radius = _rng.randf_range(145.0, 260.0)
+	dodge_duration = _rng.randf_range(0.60, 0.95)
+	strafe_weight = _rng.randf_range(0.60, 0.85)
+	retreat_weight = _rng.randf_range(0.20, 0.45)
+
+
+func _apply_improving_stats(run_number: int, total_runs: int) -> void:
+	var progress := 0.0
+
+	if total_runs > 1:
+		progress = float(run_number - 1) / float(total_runs - 1)
+
+	var beginner_stats := PROFILE_STATS["beginner"]
+	var skilled_stats := PROFILE_STATS["skilled"]
+
+	movement_speed = lerpf(
+		float(beginner_stats["movement_speed"]),
+		float(skilled_stats["movement_speed"]),
+		progress
+	)
+
+	reaction_time = lerpf(
+		float(beginner_stats["reaction_time"]),
+		float(skilled_stats["reaction_time"]),
+		progress
+	)
+
+	dodge_chance = lerpf(
+		float(beginner_stats["dodge_chance"]),
+		float(skilled_stats["dodge_chance"]),
+		progress
+	)
+
+	mistake_chance = lerpf(
+		float(beginner_stats["mistake_chance"]),
+		float(skilled_stats["mistake_chance"]),
+		progress
+	)
+
+	threat_detection_radius = lerpf(
+		float(beginner_stats["threat_detection_radius"]),
+		float(skilled_stats["threat_detection_radius"]),
+		progress
+	)
+
+	dodge_duration = lerpf(
+		float(beginner_stats["dodge_duration"]),
+		float(skilled_stats["dodge_duration"]),
+		progress
+	)
+
+	strafe_weight = lerpf(
+		float(beginner_stats["strafe_weight"]),
+		float(skilled_stats["strafe_weight"]),
+		progress
+	)
+
+	retreat_weight = lerpf(
+		float(beginner_stats["retreat_weight"]),
+		float(skilled_stats["retreat_weight"]),
+		progress
+	)
 
 
 func _choose_move_direction() -> Vector2:
@@ -134,6 +282,10 @@ func _get_dodge_direction(projectile: Projectile) -> Vector2:
 		projectile_direction = projectile.global_position.direction_to(global_position)
 
 	var away_direction := projectile.global_position.direction_to(global_position).normalized()
+
+	if away_direction.length() <= 0.01:
+		away_direction = _get_random_direction()
+
 	var left_strafe := projectile_direction.orthogonal().normalized()
 	var right_strafe := -left_strafe
 
