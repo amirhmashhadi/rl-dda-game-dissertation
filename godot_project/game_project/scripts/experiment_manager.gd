@@ -1,7 +1,7 @@
 class_name ExperimentManager
 extends Node2D
 
-@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_beginner.csv"
+@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_intermediate_logged.csv"
 @export_range(0, 10, 1) var static_difficulty_level := 5
 @export var system_name := "static"
 
@@ -10,9 +10,23 @@ extends Node2D
 @export var reset_delay := 1.0
 @export var simulation_speed := 5.0
 
+@export_group("Target Range")
+@export var player_max_health := 100.0
+@export var target_min_health_percentage := 30.0
+@export var target_max_health_percentage := 80.0
+
 var _episode_time := 0.0
 var _is_running := false
 var _run_number := 0
+
+var _initial_difficulty := 0
+var _min_difficulty := 0
+var _max_difficulty := 0
+var _difficulty_changes := 0
+var _last_difficulty_level := -1
+var _difficulty_time_sum := 0.0
+var _difficulty_tracking_time := 0.0
+var _time_in_target_range := 0.0
 
 @onready var difficulty_manager: DifficultyManager = $DifficultyManager
 @onready var enemy_turret: EnemyTurret = $EnemyTurret
@@ -36,6 +50,8 @@ func _process(delta: float) -> void:
 		return
 
 	_episode_time += delta
+	_update_difficulty_tracking(delta)
+	_update_target_range_time(delta)
 
 	if _episode_time >= episode_duration:
 		_finish_run(false)
@@ -55,7 +71,10 @@ func _start_run() -> void:
 	_clear_projectiles()
 
 	simulated_player.reset_player(player_spawn.global_position, _run_number, max_runs)
+
+	_reset_difficulty_tracking(static_difficulty_level)
 	difficulty_manager.set_difficulty_level(static_difficulty_level)
+
 	enemy_turret.set_active(true)
 
 	print("Starting run ", _run_number)
@@ -92,7 +111,14 @@ func _prepare_results_file() -> void:
 		"health_remaining",
 		"hits_taken",
 		"deaths",
+		"initial_difficulty",
 		"final_difficulty",
+		"average_difficulty",
+		"min_difficulty",
+		"max_difficulty",
+		"difficulty_changes",
+		"time_in_target_range",
+		"target_range_percentage",
 		"profile_speed",
 		"profile_reaction_time",
 		"profile_dodge_chance",
@@ -103,6 +129,7 @@ func _prepare_results_file() -> void:
 		"profile_retreat_weight"
 	]))
 
+
 func _append_result(player_died: bool) -> void:
 	var file := FileAccess.open(results_file_path, FileAccess.READ_WRITE)
 
@@ -111,6 +138,11 @@ func _append_result(player_died: bool) -> void:
 		return
 
 	var clamped_survival_time := minf(simulated_player.survival_time, episode_duration)
+	var clamped_target_time := minf(_time_in_target_range, clamped_survival_time)
+	var target_range_percentage := 0.0
+
+	if clamped_survival_time > 0.0:
+		target_range_percentage = (clamped_target_time / clamped_survival_time) * 100.0
 
 	file.seek_end()
 	file.store_csv_line(PackedStringArray([
@@ -123,7 +155,14 @@ func _append_result(player_died: bool) -> void:
 		str(snappedf(simulated_player.get_health_remaining(), 0.01)),
 		str(simulated_player.hits_taken),
 		str(simulated_player.deaths),
+		str(_initial_difficulty),
 		str(difficulty_manager.difficulty_level),
+		str(snappedf(_get_average_difficulty(), 0.01)),
+		str(_min_difficulty),
+		str(_max_difficulty),
+		str(_difficulty_changes),
+		str(snappedf(clamped_target_time, 0.01)),
+		str(snappedf(target_range_percentage, 0.01)),
 		str(snappedf(simulated_player.movement_speed, 0.01)),
 		str(snappedf(simulated_player.reaction_time, 0.01)),
 		str(snappedf(simulated_player.dodge_chance, 0.01)),
@@ -134,6 +173,40 @@ func _append_result(player_died: bool) -> void:
 		str(snappedf(simulated_player.retreat_weight, 0.01))
 	]))
 
+
+func _reset_difficulty_tracking(starting_difficulty: int) -> void:
+	_initial_difficulty = starting_difficulty
+	_min_difficulty = starting_difficulty
+	_max_difficulty = starting_difficulty
+	_difficulty_changes = 0
+	_last_difficulty_level = starting_difficulty
+	_difficulty_time_sum = 0.0
+	_difficulty_tracking_time = 0.0
+	_time_in_target_range = 0.0
+
+
+func _update_difficulty_tracking(delta: float) -> void:
+	_difficulty_time_sum += float(difficulty_manager.difficulty_level) * delta
+	_difficulty_tracking_time += delta
+
+
+func _update_target_range_time(delta: float) -> void:
+	var health_percentage := 0.0
+
+	if player_max_health > 0.0:
+		health_percentage = (simulated_player.get_health_remaining() / player_max_health) * 100.0
+
+	if health_percentage >= target_min_health_percentage and health_percentage <= target_max_health_percentage:
+		_time_in_target_range += delta
+
+
+func _get_average_difficulty() -> float:
+	if _difficulty_tracking_time <= 0.0:
+		return float(_initial_difficulty)
+
+	return _difficulty_time_sum / _difficulty_tracking_time
+
+
 func _clear_projectiles() -> void:
 	for child in projectiles.get_children():
 		child.queue_free()
@@ -141,6 +214,13 @@ func _clear_projectiles() -> void:
 
 func _on_difficulty_changed(difficulty_level: int) -> void:
 	enemy_turret.apply_difficulty(difficulty_level)
+
+	_min_difficulty = mini(_min_difficulty, difficulty_level)
+	_max_difficulty = maxi(_max_difficulty, difficulty_level)
+
+	if difficulty_level != _last_difficulty_level:
+		_difficulty_changes += 1
+		_last_difficulty_level = difficulty_level
 
 
 func _on_simulated_player_died() -> void:

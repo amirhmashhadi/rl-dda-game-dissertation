@@ -7,12 +7,12 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_ccj0q")
-results_file_path = "res://data/raw/static_difficulty_5_skilled_logged.csv"
+results_file_path = "res://data/raw/new_column_test.csv"
 
 [node name="PlayerSpawn" type="Marker2D" parent="."]
 
 [node name="SimulatedPlayer" parent="." instance=ExtResource("2_nlfiu")]
-selected_profile = "skilled"
+selected_profile = "beginner"
 
 [node name="EnemyTurret" parent="." instance=ExtResource("3_tj4t2")]
 position = Vector2(458, -476)
