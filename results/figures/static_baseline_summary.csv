@@ -1,0 +1,6 @@
+profile,runs,deaths,survivals,death_rate,survival_rate,average_survival_time,median_survival_time,min_survival_time,max_survival_time,average_health_remaining,average_hits_taken
+beginner,30,22,8,73.33,26.67,49.45,52.25,29.25,60.0,5.13,11.33
+intermediate,30,11,19,36.67,63.33,56.26,60.0,36.08,60.0,17.43,9.8
+skilled,30,5,25,16.67,83.33,59.06,60.0,47.5,60.0,27.8,8.53
+inconsistent,30,13,17,43.33,56.67,56.2,60.0,41.33,60.0,17.0,9.87
+improving,30,17,13,56.67,43.33,52.22,59.21,19.0,60.0,11.88,10.5
