@@ -3,7 +3,7 @@ extends Node2D
 
 @export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_intermediate_logged.csv"
 @export_range(0, 10, 1) var static_difficulty_level := 5
-@export var system_name := "static"
+@export_enum("static", "rule_based", "rl_based") var system_name := "static"
 
 @export var episode_duration := 60.0
 @export var max_runs := 30
@@ -18,7 +18,6 @@ extends Node2D
 var _episode_time := 0.0
 var _is_running := false
 var _run_number := 0
-
 var _initial_difficulty := 0
 var _min_difficulty := 0
 var _max_difficulty := 0
@@ -33,6 +32,7 @@ var _time_in_target_range := 0.0
 @onready var player_spawn: Marker2D = $PlayerSpawn
 @onready var projectiles: Node2D = $Projectiles
 @onready var simulated_player: SimulatedPlayer = $SimulatedPlayer
+@onready var rule_based_dda: RuleBasedDDA = get_node_or_null("RuleBasedDDA") as RuleBasedDDA
 
 
 func _ready() -> void:
@@ -74,6 +74,12 @@ func _start_run() -> void:
 
 	_reset_difficulty_tracking(static_difficulty_level)
 	difficulty_manager.set_difficulty_level(static_difficulty_level)
+	
+	if _is_rule_based_system() and rule_based_dda != null:
+		rule_based_dda.reset()
+		rule_based_dda.set_active(true)
+	elif rule_based_dda != null:
+		rule_based_dda.set_active(false)
 
 	enemy_turret.set_active(true)
 
@@ -86,6 +92,9 @@ func _finish_run(player_died: bool) -> void:
 
 	_is_running = false
 	enemy_turret.set_active(false)
+	
+	if rule_based_dda != null:
+		rule_based_dda.set_active(false)
 
 	_append_result(player_died)
 
@@ -225,3 +234,7 @@ func _on_difficulty_changed(difficulty_level: int) -> void:
 
 func _on_simulated_player_died() -> void:
 	_finish_run(true)
+
+
+func _is_rule_based_system() -> bool:
+	return system_name.to_lower() == "rule_based"
