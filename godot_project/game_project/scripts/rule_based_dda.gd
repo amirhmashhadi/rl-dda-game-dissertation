@@ -53,9 +53,23 @@ func _adjust_difficulty() -> void:
 	if player_max_health > 0.0:
 		health_percentage = (simulated_player.get_health_remaining() / player_max_health) * 100.0
 
+	var survival_time := simulated_player.survival_time
+	var hits_taken := simulated_player.hits_taken
+
 	if health_percentage < low_health_threshold:
 		difficulty_manager.decrease_difficulty()
-	elif health_percentage > high_health_threshold:
-		difficulty_manager.increase_difficulty()
-	else:
+		return
+
+	if hits_taken >= 8:
+		difficulty_manager.decrease_difficulty()
+		return
+
+	if survival_time < 20.0:
 		difficulty_manager.maintain_difficulty()
+		return
+
+	if health_percentage > high_health_threshold and hits_taken <= 2:
+		difficulty_manager.increase_difficulty()
+		return
+
+	difficulty_manager.maintain_difficulty()
