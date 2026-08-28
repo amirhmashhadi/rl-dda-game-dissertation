@@ -1,0 +1,11 @@
+system_name,profile,runs,deaths,survivals,death_rate,survival_rate,average_survival_time,median_survival_time,average_health_remaining,average_hits_taken,average_difficulty,average_final_difficulty,average_difficulty_changes,average_target_range_percentage
+static,beginner,30,22,8,73.33,26.67,49.45,52.25,5.13,11.33,5.0,5.0,0.0,
+static,intermediate,30,11,19,36.67,63.33,56.26,60.0,17.43,9.8,5.0,5.0,0.0,
+static,skilled,30,5,25,16.67,83.33,59.06,60.0,27.8,8.53,5.0,5.0,0.0,
+static,inconsistent,30,13,17,43.33,56.67,56.2,60.0,17.0,9.87,5.0,5.0,0.0,
+static,improving,30,17,13,56.67,43.33,52.22,59.21,11.88,10.5,5.0,5.0,0.0,
+rule_based,beginner,30,21,9,70.0,30.0,46.68,49.5,3.38,12.13,4.31,1.8,3.2,47.32
+rule_based,intermediate,30,11,19,36.67,63.33,56.27,60.0,16.16,9.37,4.93,3.5,2.9,48.78
+rule_based,skilled,30,14,16,46.67,53.33,55.41,60.0,13.85,9.4,5.19,3.8,3.33,46.96
+rule_based,inconsistent,30,7,23,23.33,76.67,58.44,60.0,13.11,10.13,4.72,2.83,2.97,50.06
+rule_based,improving,30,14,16,46.67,53.33,54.82,60.0,11.51,10.63,4.52,2.53,3.0,46.4
