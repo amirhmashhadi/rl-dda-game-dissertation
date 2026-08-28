@@ -33,7 +33,7 @@ var _time_in_target_range := 0.0
 @onready var projectiles: Node2D = $Projectiles
 @onready var simulated_player: SimulatedPlayer = $SimulatedPlayer
 @onready var rule_based_dda: RuleBasedDDA = get_node_or_null("RuleBasedDDA") as RuleBasedDDA
-
+@onready var dda_ai_controller: DDAAIController = get_node_or_null("DDAAIController") as DDAAIController
 
 func _ready() -> void:
 	Engine.time_scale = simulation_speed
@@ -74,6 +74,9 @@ func _start_run() -> void:
 
 	_reset_difficulty_tracking(static_difficulty_level)
 	difficulty_manager.set_difficulty_level(static_difficulty_level)
+	
+	if dda_ai_controller != null:
+		dda_ai_controller.reset()
 	
 	if _is_rule_based_system() and rule_based_dda != null:
 		rule_based_dda.reset()
