@@ -15,6 +15,16 @@ extends Node2D
 @export var target_min_health_percentage := 30.0
 @export var target_max_health_percentage := 80.0
 
+@export_group("Training Profile Randomisation")
+@export var randomise_profile_each_run := false
+@export var random_training_profiles: PackedStringArray = [
+	"beginner",
+	"intermediate",
+	"skilled",
+	"inconsistent",
+	"improving"
+]
+
 var _episode_time := 0.0
 var _is_running := false
 var _run_number := 0
@@ -26,6 +36,7 @@ var _last_difficulty_level := -1
 var _difficulty_time_sum := 0.0
 var _difficulty_tracking_time := 0.0
 var _time_in_target_range := 0.0
+var _rng := RandomNumberGenerator.new()
 
 @onready var difficulty_manager: DifficultyManager = $DifficultyManager
 @onready var enemy_turret: EnemyTurret = $EnemyTurret
@@ -35,7 +46,9 @@ var _time_in_target_range := 0.0
 @onready var rule_based_dda: RuleBasedDDA = get_node_or_null("RuleBasedDDA") as RuleBasedDDA
 @onready var dda_ai_controller: DDAAIController = get_node_or_null("DDAAIController") as DDAAIController
 
+
 func _ready() -> void:
+	_rng.randomize()
 	Engine.time_scale = simulation_speed
 
 	difficulty_manager.difficulty_changed.connect(_on_difficulty_changed)
@@ -69,24 +82,25 @@ func _start_run() -> void:
 	_is_running = true
 
 	_clear_projectiles()
+	_choose_random_training_profile()
 
 	simulated_player.reset_player(player_spawn.global_position, _run_number, max_runs)
 
 	_reset_difficulty_tracking(static_difficulty_level)
 	difficulty_manager.set_difficulty_level(static_difficulty_level)
-	
-	if dda_ai_controller != null:
-		dda_ai_controller.reset()
-	
+
 	if _is_rule_based_system() and rule_based_dda != null:
 		rule_based_dda.reset()
 		rule_based_dda.set_active(true)
 	elif rule_based_dda != null:
 		rule_based_dda.set_active(false)
 
+	if dda_ai_controller != null:
+		dda_ai_controller.reset()
+
 	enemy_turret.set_active(true)
 
-	print("Starting run ", _run_number)
+	print("Starting run ", _run_number, " | Profile: ", simulated_player.profile_name)
 
 
 func _finish_run(player_died: bool) -> void:
@@ -95,7 +109,7 @@ func _finish_run(player_died: bool) -> void:
 
 	_is_running = false
 	enemy_turret.set_active(false)
-	
+
 	if rule_based_dda != null:
 		rule_based_dda.set_active(false)
 
@@ -186,6 +200,19 @@ func _append_result(player_died: bool) -> void:
 	]))
 
 
+func _choose_random_training_profile() -> void:
+	if not randomise_profile_each_run:
+		return
+
+	if random_training_profiles.is_empty():
+		return
+
+	var random_index := _rng.randi_range(0, random_training_profiles.size() - 1)
+	var selected_training_profile := String(random_training_profiles[random_index])
+
+	simulated_player.selected_profile = selected_training_profile
+
+
 func _reset_difficulty_tracking(starting_difficulty: int) -> void:
 	_initial_difficulty = starting_difficulty
 	_min_difficulty = starting_difficulty
@@ -240,4 +267,8 @@ func _on_simulated_player_died() -> void:
 
 
 func _is_rule_based_system() -> bool:
-	return system_name.to_lower() == "rule_based"
+	return system_name == "rule_based"
+
+
+func _is_rl_based_system() -> bool:
+	return system_name == "rl_based"

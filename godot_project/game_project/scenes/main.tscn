@@ -10,9 +10,10 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_ccj0q")
-results_file_path = "res://data/raw/test_rl_based.csv"
+results_file_path = "res://data/raw/rl_training_intermediate_8.csv"
 system_name = "rl_based"
-max_runs = 5
+max_runs = 300
+randomise_profile_each_run = true
 
 [node name="PlayerSpawn" type="Marker2D" parent="."]
 
@@ -37,4 +38,4 @@ script = ExtResource("6_d073j")
 
 [node name="Sync" type="Node" parent="."]
 script = ExtResource("7_bdflf")
-speed_up = 5.0
+speed_up = 10.0

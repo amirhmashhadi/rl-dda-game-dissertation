@@ -1,13 +1,23 @@
+from pathlib import Path
+
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.vec_env.vec_monitor import VecMonitor
 
 from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
 
 
+MODEL_DIR = Path("models")
+CHECKPOINT_DIR = MODEL_DIR / "checkpoints"
+
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
+CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+
+
 env = StableBaselinesGodotEnv(
-    env_path=None,     # None means in-editor training
+    env_path=None,
     port=11008,
-    speedup=5,
+    speedup=10,
 )
 
 env = VecMonitor(env)
@@ -22,8 +32,22 @@ model = PPO(
     tensorboard_log="logs/rl_dda_tensorboard",
 )
 
-model.learn(total_timesteps=10_000)
+checkpoint_callback = CheckpointCallback(
+    save_freq=10_000,
+    save_path=str(CHECKPOINT_DIR),
+    name_prefix="rl_dda_ppo_checkpoint",
+)
 
-model.save("models/rl_dda_ppo_intermediate")
+try:
+    model.learn(
+        total_timesteps=150_000,
+        callback=checkpoint_callback,
+    )
 
-env.close()
+except KeyboardInterrupt:
+    print("Training interrupted. Saving current model...")
+
+finally:
+    model.save(MODEL_DIR / "rl_dda_ppo_randomised_latest_v2")
+    env.close()
+    print("Model saved to models/rl_dda_ppo_randomised_latest_v2.zip")
