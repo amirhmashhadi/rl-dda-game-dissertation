@@ -1,12 +1,12 @@
 class_name ExperimentManager
 extends Node2D
 
-@export_file("*.csv") var results_file_path := "res://data/raw/static_difficulty_5_intermediate_logged.csv"
+@export_file("*.csv") var results_file_path := "res://data/raw/rl_training_reward_fixed_1.csv"
 @export_range(0, 10, 1) var static_difficulty_level := 5
-@export_enum("static", "rule_based", "rl_based") var system_name := "static"
+@export_enum("static", "rule_based", "rl_based") var system_name := "rl_based"
 
 @export var episode_duration := 60.0
-@export var max_runs := 30
+@export var max_runs := 300
 @export var reset_delay := 1.0
 @export var simulation_speed := 5.0
 
@@ -16,18 +16,23 @@ extends Node2D
 @export var target_max_health_percentage := 80.0
 
 @export_group("Training Profile Randomisation")
-@export var randomise_profile_each_run := false
+@export var randomise_profile_each_run := true
 @export var random_training_profiles: PackedStringArray = [
 	"beginner",
 	"intermediate",
 	"skilled",
-	"inconsistent",
-	"improving"
+	"inconsistent"
 ]
+
+@export_group("RL Initial Difficulty Randomisation")
+@export var randomise_initial_difficulty_each_run := true
+@export_range(0, 10, 1) var random_initial_min_difficulty := 3
+@export_range(0, 10, 1) var random_initial_max_difficulty := 7
 
 var _episode_time := 0.0
 var _is_running := false
 var _run_number := 0
+
 var _initial_difficulty := 0
 var _min_difficulty := 0
 var _max_difficulty := 0
@@ -36,6 +41,7 @@ var _last_difficulty_level := -1
 var _difficulty_time_sum := 0.0
 var _difficulty_tracking_time := 0.0
 var _time_in_target_range := 0.0
+
 var _rng := RandomNumberGenerator.new()
 
 @onready var difficulty_manager: DifficultyManager = $DifficultyManager
@@ -86,8 +92,10 @@ func _start_run() -> void:
 
 	simulated_player.reset_player(player_spawn.global_position, _run_number, max_runs)
 
-	_reset_difficulty_tracking(static_difficulty_level)
-	difficulty_manager.set_difficulty_level(static_difficulty_level)
+	var starting_difficulty := _get_starting_difficulty()
+
+	_reset_difficulty_tracking(starting_difficulty)
+	difficulty_manager.set_difficulty_level(starting_difficulty)
 
 	if _is_rule_based_system() and rule_based_dda != null:
 		rule_based_dda.reset()
@@ -100,7 +108,14 @@ func _start_run() -> void:
 
 	enemy_turret.set_active(true)
 
-	print("Starting run ", _run_number, " | Profile: ", simulated_player.profile_name)
+	print(
+		"Starting run ",
+		_run_number,
+		" | Profile: ",
+		simulated_player.profile_name,
+		" | Starting difficulty: ",
+		starting_difficulty
+	)
 
 
 func _finish_run(player_died: bool) -> void:
@@ -116,7 +131,6 @@ func _finish_run(player_died: bool) -> void:
 	_append_result(player_died)
 
 	await get_tree().create_timer(reset_delay).timeout
-
 	_start_run()
 
 
@@ -209,8 +223,20 @@ func _choose_random_training_profile() -> void:
 
 	var random_index := _rng.randi_range(0, random_training_profiles.size() - 1)
 	var selected_training_profile := String(random_training_profiles[random_index])
-
 	simulated_player.selected_profile = selected_training_profile
+
+
+func _get_starting_difficulty() -> int:
+	if not _is_rl_based_system():
+		return static_difficulty_level
+
+	if not randomise_initial_difficulty_each_run:
+		return static_difficulty_level
+
+	var min_level := mini(random_initial_min_difficulty, random_initial_max_difficulty)
+	var max_level := maxi(random_initial_min_difficulty, random_initial_max_difficulty)
+
+	return _rng.randi_range(min_level, max_level)
 
 
 func _reset_difficulty_tracking(starting_difficulty: int) -> void:

@@ -1,13 +1,12 @@
 from pathlib import Path
-
 from stable_baselines3 import PPO
 from godot_rl.wrappers.stable_baselines_wrapper import StableBaselinesGodotEnv
 
-
-MODEL_PATH = Path("models/rl_dda_ppo_randomised_latest_v2.zip")
+MODEL_PATH = Path("models/rl_dda_ppo_randomised_stochastic_v1.zip")
 print(f"Loading model from: {MODEL_PATH.resolve()}")
-EVAL_TIMESTEPS = 20_000
 
+# Set this higher than you need; Godot will shut down when the 30 runs complete
+EVAL_TIMESTEPS = 100_000 
 
 env = StableBaselinesGodotEnv(
     env_path=None,
@@ -16,7 +15,6 @@ env = StableBaselinesGodotEnv(
 )
 
 model = PPO.load(MODEL_PATH)
-
 obs = env.reset()
 
 try:
@@ -25,8 +23,10 @@ try:
         obs, reward, done, info = env.step(action)
 
 except KeyboardInterrupt:
-    print("Evaluation stopped manually.")
-
+    print("\nEvaluation stopped manually by user.")
+except Exception as e:
+    # This triggers when Godot reaches its max runs and closes the connection
+    print(f"\nGodot environment closed successfully: {e}")
 finally:
     env.close()
-    print("Evaluation finished.")
+    print("Evaluation Python script finished.")

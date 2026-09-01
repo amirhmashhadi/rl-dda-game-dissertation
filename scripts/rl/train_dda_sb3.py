@@ -26,9 +26,11 @@ model = PPO(
     "MultiInputPolicy",
     env,
     verbose=1,
-    n_steps=64,
-    batch_size=64,
+    n_steps=8192,      # Increased from 64. Collects ~2.2 full episodes before updating
+    batch_size=64,     # The subset size used during the network update
+    n_epochs=10,       # Number of passes over the buffer (default is 10)
     learning_rate=0.0003,
+    ent_coef=0.01,     # Adds 1% entropy to force the agent to explore different difficulties
     tensorboard_log="logs/rl_dda_tensorboard",
 )
 
@@ -40,7 +42,7 @@ checkpoint_callback = CheckpointCallback(
 
 try:
     model.learn(
-        total_timesteps=150_000,
+        total_timesteps=300_000,
         callback=checkpoint_callback,
     )
 
@@ -48,6 +50,6 @@ except KeyboardInterrupt:
     print("Training interrupted. Saving current model...")
 
 finally:
-    model.save(MODEL_DIR / "rl_dda_ppo_randomised_latest_v2")
+    model.save(MODEL_DIR / "rl_dda_ppo_randomised_stochastic_v1")
     env.close()
-    print("Model saved to models/rl_dda_ppo_randomised_latest_v2.zip")
+    print("Model saved to models/rl_dda_ppo_randomised_stochastic_v1.zip")

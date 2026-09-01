@@ -10,10 +10,9 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_ccj0q")
-results_file_path = "res://data/raw/rl_training_intermediate_8.csv"
-system_name = "rl_based"
-max_runs = 300
-randomise_profile_each_run = true
+results_file_path = "res://data/raw/rl_eval_randomised_8.csv"
+max_runs = 60
+randomise_initial_difficulty_each_run = false
 
 [node name="PlayerSpawn" type="Marker2D" parent="."]
 
