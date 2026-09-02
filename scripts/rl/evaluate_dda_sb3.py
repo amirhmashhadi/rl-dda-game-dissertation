@@ -19,7 +19,7 @@ obs = env.reset()
 
 try:
     for _ in range(EVAL_TIMESTEPS):
-        action, _states = model.predict(obs, deterministic=True)
+        action, _states = model.predict(obs, deterministic=False)
         obs, reward, done, info = env.step(action)
 
 except KeyboardInterrupt:

@@ -10,13 +10,15 @@
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_ccj0q")
-results_file_path = "res://data/raw/rl_eval_randomised_8.csv"
-max_runs = 60
+results_file_path = "res://data/raw/rl_based_improving_logged.csv"
+max_runs = 30
+randomise_profile_each_run = false
 randomise_initial_difficulty_each_run = false
 
 [node name="PlayerSpawn" type="Marker2D" parent="."]
 
 [node name="SimulatedPlayer" parent="." instance=ExtResource("2_nlfiu")]
+selected_profile = "improving"
 
 [node name="EnemyTurret" parent="." instance=ExtResource("3_tj4t2")]
 position = Vector2(458, -476)
