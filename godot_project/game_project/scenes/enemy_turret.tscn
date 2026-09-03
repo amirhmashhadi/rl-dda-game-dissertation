@@ -9,6 +9,7 @@ script = ExtResource("1_8mwka")
 projectile_scene = ExtResource("2_bdu1w")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+self_modulate = Color(1, 0.415686, 0.34902, 1)
 texture = ExtResource("3_2bqu2")
 
 [node name="ProjectileSpawnPoint" type="Marker2D" parent="."]
