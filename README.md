@@ -38,9 +38,6 @@ Final evaluation compares all three difficulty systems across the same simulated
 - Stable-Baselines3
 - Godot RL Agents
 - PPO
-- pandas
-- matplotlib
-- Jupyter
 
 ## Repository Structure
 
